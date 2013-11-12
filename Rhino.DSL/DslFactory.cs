@@ -104,6 +104,32 @@ namespace Rhino.DSL
 			ReturnNull
 		}
 
+        /// <summary>
+        /// Try to recompile specified script.
+        /// If compilation succeeds, replace the cached assembly
+        /// If fails, do not remove the previous assembly from the cache.
+        /// </summary>
+        /// <typeparam name="TDslBase"></typeparam>
+        /// <param name="replaceCached">replace cached previous version of compiled code</param>
+        /// <param name="url"></param>
+        public void TryRecompile<TDslBase>(string url, bool replaceCached)
+        {
+            DslEngine engine = GetEngine<TDslBase>();
+            string[] urls = new string[] { url };
+            var cc = engine.Compile(urls);
+            if (cc.Errors.Count > 0)
+            {
+                throw new Exception("Compilation failed: " + cc.Errors.Join("\n"));
+            }
+            if (cc.GeneratedAssembly == null) throw new Exception("There's no generated assembly");
+            if (replaceCached)
+            {
+                RegisterBatchInCache(engine, urls, cc.GeneratedAssembly);
+                RaiseCompilationEvent(true);
+            }
+        }
+
+
 		private TDslBase CreateInternal<TDslBase>(ScriptNotFoundBehavior notFoundBehavior, string url, object[] parameters)
 		{
 			DslEngine engine = GetEngine<TDslBase>();

@@ -99,7 +99,6 @@
     <Compile Include="OrderDSL\OrderActionsDslEngine.cs" />
     <Compile Include="OrderDSL\OrderDSLFixture.cs" />
     <Compile Include="OrderDSL\User.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SchedulingDSL\BaseScheduler.cs" />
     <Compile Include="SchedulingDSL\SchedulingDslEngine.cs" />
     <Compile Include="SchedulingDSL\WebSite.cs" />
@@ -172,6 +171,9 @@
       <ProductName>Windows Installer 3.1</ProductName>
       <Install>true</Install>
     </BootstrapperPackage>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Properties\" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
