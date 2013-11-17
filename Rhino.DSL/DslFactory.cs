@@ -3,6 +3,7 @@ namespace Rhino.DSL
 	using System;
 	using System.Collections.Generic;
 	using System.Reflection;
+    using System.Text;
 	using Boo.Lang.Compiler;
 
 	/// <summary>
@@ -98,7 +99,7 @@ namespace Rhino.DSL
 		/// </summary>
 		public event EventHandler Recompilation = delegate { };
 
-		private enum ScriptNotFoundBehavior
+        private enum ScriptNotFoundBehavior
 		{
 			Throw,
 			ReturnNull
@@ -162,6 +163,10 @@ namespace Rhino.DSL
 						compilerContext = engine.Compile(urls);
 					}
 					Assembly assembly = compilerContext.GeneratedAssembly;
+                    foreach(Type t in assembly.GetTypes())
+                    {
+                        
+                    }
 					RegisterBatchInCache(engine, urls, assembly);
 					//find the type that we searched for
 					//we may have a race condition with the cache, so we force
@@ -220,7 +225,14 @@ namespace Rhino.DSL
 				{
 					Type type = engine.GetTypeForUrl(compiledAssembly, batchUrl);
 					if (type == null)
-						throw new InvalidOperationException("Could not find the generated type for: " + batchUrl);
+                    {
+                        var sb = new StringBuilder();
+                        foreach (var tp in compiledAssembly.GetTypes())
+                        {
+                            sb.AppendLine(tp.FullName);
+                        }
+						throw new InvalidOperationException("Could not find the generated type for: " + batchUrl + ". Existing types: \n" + sb.ToString());
+                    }
 					engine.Cache.Set(batchUrl, type);
 				}
 				engine.Storage.NotifyOnChange(urls, delegate(string invalidatedUrl)
