@@ -43,6 +43,25 @@ namespace Rhino.DSL
         /// <returns></returns>
         DateTime GetLastModificationDate(string url);
     }
+
+    /// <summary>
+    /// script compilation mode
+    /// </summary>
+    public enum CompilationMode
+    {
+        /// <summary>
+        /// Compile and if successful, replace previous version in the type cache
+        /// </summary>
+        Compile,
+        /// <summary>
+        /// Compile but don't replace previous version of the code in the cache
+        /// </summary>
+        CompileNoReplace,
+        /// <summary>
+        /// Check for errors only without generating any executable.
+        /// </summary>
+        CheckErrors
+    }
     /// <summary>
     /// Simplified DSL version
     /// </summary>
@@ -136,7 +155,7 @@ namespace Rhino.DSL
                     string[] urls = _storage.GetScriptUrls().ToArray();
                     if (urls != null && urls.Contains(url))
                     {
-                        TryRecompile(urls, true);
+                        TryRecompile(urls, CompilationMode.Compile);
                     }
                 }
                 catch (Exception ex)
@@ -146,7 +165,7 @@ namespace Rhino.DSL
             }
             TypeCacheEntry tp;
             if (_typeCache.TryGetValue(url, out tp)) return tp.DslType;
-            Type t2 = TryRecompile(url, true);
+            Type t2 = TryRecompile(url, CompilationMode.Compile);
             return t2;
         }
 
@@ -154,13 +173,13 @@ namespace Rhino.DSL
         /// 
         /// </summary>
         /// <param name="urls"></param>
-        /// <param name="replaceCached"></param>
+        /// <param name="mode"></param>
         /// <returns></returns>
-        protected virtual Assembly TryRecompile(string[] urls, bool replaceCached)
+        protected virtual Assembly TryRecompile(string[] urls, CompilationMode mode)
         {
-            CompilerContext cc = TryCompile(urls);
-            if (cc.GeneratedAssembly == null) throw new Exception("Generated assembly missing");
-            if (replaceCached)
+            CompilerContext cc = TryCompile(urls, mode == CompilationMode.CheckErrors ? true : false);
+            if (cc.GeneratedAssembly == null && (mode == CompilationMode.Compile || mode == CompilationMode.CompileNoReplace)) throw new Exception("Generated assembly missing");
+            if (mode == CompilationMode.Compile)
             {
                 foreach (var url in urls)
                 {
@@ -186,15 +205,17 @@ namespace Rhino.DSL
             return cc.GeneratedAssembly;
         }
         
+        
+
         /// <summary>
         /// 
         /// </summary>
         /// <param name="url"></param>
-        /// <param name="replaceCached"></param>
+        /// <param name="mode"></param>
         /// <returns></returns>
-        public virtual Type TryRecompile(string url, bool replaceCached)
+        public virtual Type TryRecompile(string url, CompilationMode mode)
         {
-            Assembly asm = TryRecompile(new string[] { url }, replaceCached);
+            Assembly asm = TryRecompile(new string[] { url }, mode);
             string typeName = _storage.GetTypeNameFromUrl(url);
             var tp = asm.GetType(typeName);
             if (tp == null)
@@ -245,16 +266,51 @@ namespace Rhino.DSL
         }
 
         /// <summary>
-        /// Try re-compiling specified urls
+        /// check script syntax
         /// </summary>
-        /// <param name="urls"></param>
+        /// <param name="script"></param>
+        /// <param name="errors">provide a list for adding errors</param>
+        /// <param name="warnings">provide a list for adding warnings</param>
         /// <returns></returns>
-        protected virtual CompilerContext TryCompile(string[] urls)
+        public virtual bool CheckSyntax(string script, IList<string> errors, IList<string> warnings)
         {
             BooCompiler compiler = new BooCompiler();
             compiler.Parameters.OutputType = CompilerOutputType.Library;
             compiler.Parameters.GenerateInMemory = true;
-            compiler.Parameters.Pipeline = new Boo.Lang.Compiler.Pipelines.CompileToMemory();
+            compiler.Parameters.Pipeline = new Boo.Lang.Compiler.Pipelines.CheckForErrors();
+            
+            CustomizeCompiler(compiler, compiler.Parameters.Pipeline, new string[] { });
+            compiler.Parameters.Input.Add(new Boo.Lang.Compiler.IO.StringInput("the_script", script));
+            CompilerContext compilerContext = compiler.Run();
+            if (warnings != null)
+            {
+                foreach (var w in compilerContext.Warnings)
+                {
+                    warnings.Add(w.ToString());
+                }
+            }
+            if (errors != null)
+            {
+                foreach (var e in compilerContext.Errors)
+                {
+                    errors.Add(e.ToString(true));
+                }
+            }
+            return compilerContext.Errors.Count > 0;
+        }
+
+        /// <summary>
+        /// Try re-compiling specified urls
+        /// </summary>
+        /// <param name="urls"></param>
+        /// <param name="checkSyntaxOnly">Don't compile, check syntax only.</param>
+        /// <returns></returns>
+        protected virtual CompilerContext TryCompile(string[] urls, bool checkSyntaxOnly = false)
+        {
+            BooCompiler compiler = new BooCompiler();
+            compiler.Parameters.OutputType = CompilerOutputType.Library;
+            compiler.Parameters.GenerateInMemory = true;
+            compiler.Parameters.Pipeline = checkSyntaxOnly ? (CompilerPipeline) new Boo.Lang.Compiler.Pipelines.CheckForErrors() : new Boo.Lang.Compiler.Pipelines.CompileToMemory();
             
             CustomizeCompiler(compiler, compiler.Parameters.Pipeline, urls);
             foreach (string url in urls)
