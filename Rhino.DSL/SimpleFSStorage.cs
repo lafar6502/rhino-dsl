@@ -115,5 +115,15 @@ namespace Rhino.DSL
             if (!File.Exists(pth)) return DateTime.MinValue;
             return File.GetLastWriteTime(pth);
         }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="url"></param>
+        /// <returns></returns>
+        public string Normalize(string url)
+        {
+            return url;
+        }
     }
 }

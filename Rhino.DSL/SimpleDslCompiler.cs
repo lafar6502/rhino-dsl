@@ -42,6 +42,12 @@ namespace Rhino.DSL
         /// <param name="url"></param>
         /// <returns></returns>
         DateTime GetLastModificationDate(string url);
+        /// <summary>
+        /// normalize an url (return a canonical id)
+        /// </summary>
+        /// <param name="url"></param>
+        /// <returns></returns>
+        string Normalize(string url);
     }
 
     /// <summary>
@@ -111,7 +117,13 @@ namespace Rhino.DSL
         /// dsl import namespaces
         /// </summary>
         public List<string> Namespaces { get; set; }
-
+        /// <summary>
+        /// storage
+        /// </summary>
+        public ISimpleScriptStorage Storage
+        {
+            get { return _storage; }
+        }
         /// <summary>
         /// 
         /// </summary>
@@ -148,6 +160,7 @@ namespace Rhino.DSL
         /// <returns></returns>
         public virtual Type GetCompiledDslType(string url)
         {
+            url = _storage.Normalize(url);
             if (_typeCache.Count == 0)
             {
                 try
@@ -215,6 +228,7 @@ namespace Rhino.DSL
         /// <returns></returns>
         public virtual Type TryRecompile(string url, CompilationMode mode)
         {
+            url = _storage.Normalize(url);
             Assembly asm = TryRecompile(new string[] { url }, mode);
             string typeName = _storage.GetTypeNameFromUrl(url);
             var tp = asm.GetType(typeName);
@@ -237,6 +251,7 @@ namespace Rhino.DSL
             {
                 TypeCacheEntry tce;
                 if (_typeCache.TryGetValue(url, out tce)) tce.Modified = true;
+                if (_typeCache.TryGetValue(_storage.Normalize(url), out tce)) tce.Modified = true;
             }
         }
 
@@ -261,7 +276,7 @@ namespace Rhino.DSL
         /// <returns></returns>
         public virtual DateTime? GetLastModificationDate(string url)
         {
-            var dt = _storage.GetLastModificationDate(url);
+            var dt = _storage.GetLastModificationDate(_storage.Normalize(url));
             return dt > DateTime.MinValue ? dt : (DateTime?)null;
         }
 
