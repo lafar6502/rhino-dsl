@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="windows-1250" ?>
+<project name="RhinoDSL" default="RhinoDSL" basedir="." >
+    <tstamp />
+
+    <property name="nant.settings.currentframework" value="net-4.0" />
+
+    <target name="clean">
+        <delete>
+            <fileset>
+                <include name="Rhino.DSL/bin/*.*" />
+            </fileset>
+        </delete>
+    </target>
+
+    
+
+    <target name="RhinoDSL" depends="">
+        <csc target="library" output="Rhino.DSL/bin/Rhino.DSL.dll" debug="true">
+            <nowarn>
+				<!-- do not report warnings for missing XML comments -->
+				<warning number="1591" />
+			</nowarn>
+			<references basedir=".">
+                <include name="SharedLibs/Boo.Lang.dll" />
+                <include name="SharedLibs/Boo.Lang.Parser.dll" />
+                <include name="SharedLibs/Boo.Lang.Compiler.dll" />
+            </references>
+            <sources basedir="Rhino.DSL">
+                <include name="**/*.cs" />
+            </sources>
+            <arg value="/nowarn:1591"/>
+        </csc>
+    </target>
+
+</project>

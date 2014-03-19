@@ -249,9 +249,11 @@ namespace Rhino.DSL
             if (urls == null) return;
             foreach (string url in urls)
             {
-                TypeCacheEntry tce;
-                if (_typeCache.TryGetValue(url, out tce)) tce.Modified = true;
-                if (_typeCache.TryGetValue(_storage.Normalize(url), out tce)) tce.Modified = true;
+                _typeCache.Remove(url);
+                _typeCache.Remove(_storage.Normalize(url));
+                //TypeCacheEntry tce;
+                //if (_typeCache.TryGetValue(url, out tce)) tce.Modified = true;
+                //if (_typeCache.TryGetValue(_storage.Normalize(url), out tce)) tce.Modified = true;
             }
         }
 
