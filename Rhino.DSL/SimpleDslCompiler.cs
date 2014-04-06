@@ -111,12 +111,24 @@ namespace Rhino.DSL
                 "System",
                 "System.Text"
             });
+            WhitespaceAgnostic = false;
+            DSLMethodName = "Prepare";
         }
 
         /// <summary>
         /// dsl import namespaces
         /// </summary>
         public List<string> Namespaces { get; set; }
+        /// <summary>
+        /// switch compiler to whitespace agnostic mode
+        /// </summary>
+        public bool WhitespaceAgnostic { get; set; }
+        /// <summary>
+        /// Name of the abstract method that is overridden by the dynamically
+        /// generated class. 'void Prepare()' by default
+        /// </summary>
+        public string DSLMethodName { get; set; }
+
         /// <summary>
         /// storage
         /// </summary>
@@ -295,7 +307,8 @@ namespace Rhino.DSL
             compiler.Parameters.OutputType = CompilerOutputType.Library;
             compiler.Parameters.GenerateInMemory = true;
             compiler.Parameters.Pipeline = new Boo.Lang.Compiler.Pipelines.CheckForErrors();
-            
+            compiler.Parameters.WhiteSpaceAgnostic = this.WhitespaceAgnostic;
+
             CustomizeCompiler(compiler, compiler.Parameters.Pipeline, new string[] { });
             compiler.Parameters.Input.Add(new Boo.Lang.Compiler.IO.StringInput("the_script", script));
             CompilerContext compilerContext = compiler.Run();
@@ -328,7 +341,7 @@ namespace Rhino.DSL
             compiler.Parameters.OutputType = CompilerOutputType.Library;
             compiler.Parameters.GenerateInMemory = true;
             compiler.Parameters.Pipeline = checkSyntaxOnly ? (CompilerPipeline) new Boo.Lang.Compiler.Pipelines.CheckForErrors() : new Boo.Lang.Compiler.Pipelines.CompileToMemory();
-            
+            compiler.Parameters.WhiteSpaceAgnostic = this.WhitespaceAgnostic;
             CustomizeCompiler(compiler, compiler.Parameters.Pipeline, urls);
             foreach (string url in urls)
             {
@@ -365,7 +378,7 @@ namespace Rhino.DSL
                 catch (Exception) {  }
             }*/
 
-            pipeline.Insert(1, new ImplicitBaseClassCompilerStep(typeof(T), "Prepare", Namespaces.ToArray()));
+            pipeline.Insert(1, new ImplicitBaseClassCompilerStep(typeof(T), DSLMethodName, Namespaces.ToArray()));
         }
 
         private Action<CompilerContext, string[]> _compilationCallback;
