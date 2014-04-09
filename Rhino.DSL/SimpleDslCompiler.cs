@@ -162,7 +162,7 @@ namespace Rhino.DSL
         /// <returns></returns>
         public virtual IEnumerable<T> CreateAll()
         {
-            return GetScriptUrls().Select(x => Create(x));
+            return GetScriptUrls().Select(x => Create(x)).ToList();
         }
 
         /// <summary>
@@ -303,6 +303,7 @@ namespace Rhino.DSL
         /// <returns></returns>
         public virtual bool CheckSyntax(string script, IList<string> errors, IList<string> warnings)
         {
+            //Console.WriteLine("CheckSyntax {0}", script);
             BooCompiler compiler = new BooCompiler();
             compiler.Parameters.OutputType = CompilerOutputType.Library;
             compiler.Parameters.GenerateInMemory = true;
@@ -326,7 +327,7 @@ namespace Rhino.DSL
                     errors.Add(e.ToString(true));
                 }
             }
-            return compilerContext.Errors.Count > 0;
+            return compilerContext.Errors.Count == 0;
         }
 
         /// <summary>
@@ -337,6 +338,7 @@ namespace Rhino.DSL
         /// <returns></returns>
         protected virtual CompilerContext TryCompile(string[] urls, bool checkSyntaxOnly = false)
         {
+            //Console.WriteLine("TryCompile {0}, syntaxcheck={1}", string.Join(",", urls), checkSyntaxOnly);
             BooCompiler compiler = new BooCompiler();
             compiler.Parameters.OutputType = CompilerOutputType.Library;
             compiler.Parameters.GenerateInMemory = true;
